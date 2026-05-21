@@ -48,6 +48,13 @@ class OBJECT_OT_add_gp_stroke(bpy.types.Operator):
     bl_description = "Add a 2m straight grease pencil stroke centered on the 3D cursor"
     bl_options = {'REGISTER', 'UNDO'}
 
+    thickness: bpy.props.IntProperty(
+        name="Thickness",
+        default=5,
+        min=1,
+        max=1000,
+    )
+
     def execute(self, context):
         gp_data = bpy.data.grease_pencils.new("GPStroke")
         gp_obj = bpy.data.objects.new("GPStroke", gp_data)
@@ -71,11 +78,14 @@ class OBJECT_OT_add_gp_stroke(bpy.types.Operator):
             stroke = drawing.strokes[0]
             stroke.material_index = 0
             stroke.points[0].position = (-1.0, 0.0, 0.0)
+            stroke.points[0].radius = self.thickness
             stroke.points[1].position = (1.0, 0.0, 0.0)
+            stroke.points[1].radius = self.thickness
         else:
             # GP v2 API (Blender < 4.3)
             stroke = frame.strokes.new()
             stroke.display_mode = '3DSPACE'
+            stroke.line_width = self.thickness
             stroke.points.add(count=2)
             stroke.points[0].co = (-1.0, 0.0, 0.0)
             stroke.points[1].co = (1.0, 0.0, 0.0)
