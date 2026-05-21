@@ -64,13 +64,21 @@ class OBJECT_OT_add_gp_stroke(bpy.types.Operator):
         layer = gp_data.layers.new("Layer")
         frame = layer.frames.new(context.scene.frame_current)
 
-        # Blender 4.3+ (GP v3): strokes live on frame.drawing
-        drawing = frame.drawing
-        drawing.add_strokes([2])
-        stroke = drawing.strokes[0]
-        stroke.material_index = 0
-        stroke.points[0].position = (-1.0, 0.0, 0.0)
-        stroke.points[1].position = (1.0, 0.0, 0.0)
+        if bpy.app.version >= (4, 3, 0):
+            # GP v3 API (Blender 4.3+)
+            drawing = frame.drawing
+            drawing.add_strokes([2])
+            stroke = drawing.strokes[0]
+            stroke.material_index = 0
+            stroke.points[0].position = (-1.0, 0.0, 0.0)
+            stroke.points[1].position = (1.0, 0.0, 0.0)
+        else:
+            # GP v2 API (Blender < 4.3)
+            stroke = frame.strokes.new()
+            stroke.display_mode = '3DSPACE'
+            stroke.points.add(count=2)
+            stroke.points[0].co = (-1.0, 0.0, 0.0)
+            stroke.points[1].co = (1.0, 0.0, 0.0)
 
         bpy.ops.object.select_all(action='DESELECT')
         gp_obj.select_set(True)
