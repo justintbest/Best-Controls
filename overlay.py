@@ -53,7 +53,6 @@ ICON_SEGMENTS = {
 }
 
 CIRCLE_D = 22
-CIRCLE_GAP_Y = 5
 CIRCLE_GAP_X = 6
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
@@ -138,13 +137,13 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             y -= GAP_Y
 
         left_edge = min(b[3] for b in buttons)
+        row_step = BUTTON_H + GAP_Y
+        top_row_center = region.height - TOP_OFFSET - BUTTON_H / 2
         circles = []
-        cy = region.height - TOP_OFFSET - BUTTON_H / 2 + CIRCLE_D / 2
-        for label, short, idname, kwargs in ADD_BUTTONS:
-            cy -= CIRCLE_D
+        for i, (label, short, idname, kwargs) in enumerate(ADD_BUTTONS):
+            cy = top_row_center - i * row_step
             cx = left_edge - CIRCLE_GAP_X - CIRCLE_D / 2
             circles.append(("CIRCLE", label, short, cx, cy, CIRCLE_D, idname, kwargs))
-            cy -= CIRCLE_GAP_Y
 
         return buttons, circles
 
