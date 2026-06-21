@@ -28,6 +28,8 @@ BUTTONS = [
 
 REFERENCE_LABEL = "Flip Camera X"
 
+ORANGE_BUTTON_LABELS = {"Flip Camera X", "Align Cam"}
+
 ADD_BUTTONS = [
     ("Vertex", "object.add_single_vertex", {}),
     ("Plane", "object.add_single_plane", {}),
@@ -189,7 +191,10 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            color = (0.13, 0.13, 0.13, 1.0) if hovered else (0.02, 0.02, 0.02, 1.0)
+            if label in ORANGE_BUTTON_LABELS:
+                color = (0.55, 0.40, 0.28, 1.0) if hovered else (0.42, 0.30, 0.20, 1.0)
+            else:
+                color = (0.13, 0.13, 0.13, 1.0) if hovered else (0.02, 0.02, 0.02, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
             blf.position(0, x + text_pad, y + (h - font_size) / 2 + 1, 0)
@@ -198,7 +203,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         for kind, label, x, y, w, h, idname, kwargs in add_buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            color = (0.25, 0.55, 0.95, 1.0) if hovered else (0.13, 0.42, 0.85, 0.95)
+            color = (0.40, 0.50, 0.62, 1.0) if hovered else (0.30, 0.40, 0.50, 0.95)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
             text_w = blf.dimensions(0, label)[0]
