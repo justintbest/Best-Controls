@@ -190,7 +190,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         return buttons, add_buttons, font_size, text_pad, s
 
     def draw_callback(self, context):
-        region = context.region
+        region = bpy.context.region
         buttons, add_buttons, font_size, text_pad, s = self.build_layout(region)
         mouse_x, mouse_y = self.mouse_pos
 
