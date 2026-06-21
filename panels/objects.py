@@ -5,7 +5,7 @@ class VIEW3D_PT_best_objects(bpy.types.Panel):
     bl_idname = "VIEW3D_PT_best_objects"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Best Controls"
+    bl_category = " Best Controls"
 
     def draw(self, context):
         self.layout.operator("object.flip_x")
