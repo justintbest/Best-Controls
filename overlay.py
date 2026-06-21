@@ -4,12 +4,11 @@ import gpu
 import blf
 from gpu_extras.batch import batch_for_shader
 
-FONT_SIZE = 11
-BUTTON_H = 30
-RADIUS = 8
-GAP_Y = 6
+FONT_SIZE = 10
+BUTTON_H = 22
+RADIUS = 11
+GAP_Y = 5
 TOP_OFFSET = 290
-STRIP_WIDTH = 180
 STRIP_MARGIN = 4
 TEXT_PAD = 10
 
@@ -65,11 +64,14 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     _running = False
 
     def build_layout(self, region):
-        x = region.width - STRIP_WIDTH - STRIP_MARGIN
-        w = STRIP_WIDTH
+        blf.size(0, FONT_SIZE)
+        right_edge = region.width - STRIP_MARGIN
         y = region.height - TOP_OFFSET
         buttons = []
         for label, short, idname, kwargs in BUTTONS:
+            text_w = blf.dimensions(0, label)[0]
+            w = text_w + 2 * TEXT_PAD
+            x = right_edge - w
             y -= BUTTON_H
             buttons.append(("BUTTON", label, short, x, y, w, BUTTON_H, idname, kwargs))
             y -= GAP_Y
