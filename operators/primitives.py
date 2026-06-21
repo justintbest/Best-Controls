@@ -42,6 +42,17 @@ class OBJECT_OT_add_single_cube(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_add_single_empty(bpy.types.Operator):
+    bl_idname = "object.add_single_empty"
+    bl_label = "Add Empty"
+    bl_description = "Add a plain axes empty at the 3D cursor"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.empty_add(type='PLAIN_AXES', location=context.scene.cursor.location)
+        return {'FINISHED'}
+
+
 class OBJECT_OT_add_gp_stroke(bpy.types.Operator):
     bl_idname = "object.add_gp_stroke"
     bl_label = "Add Grease Pencil"

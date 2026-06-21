@@ -15,4 +15,4 @@ from .object_utils import (
     OBJECT_OT_gp_to_mesh,
     OBJECT_OT_add_decimate_modifier,
 )
-from .primitives import OBJECT_OT_add_single_vertex, OBJECT_OT_add_single_plane, OBJECT_OT_add_single_cube, OBJECT_OT_add_gp_stroke
+from .primitives import OBJECT_OT_add_single_vertex, OBJECT_OT_add_single_plane, OBJECT_OT_add_single_cube, OBJECT_OT_add_single_empty, OBJECT_OT_add_gp_stroke

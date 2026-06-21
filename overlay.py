@@ -28,51 +28,15 @@ BUTTONS = [
 REFERENCE_LABEL = "Flip Camera X"
 
 ADD_BUTTONS = [
-    ("Add Vertex", "V", "object.add_single_vertex", {}),
-    ("Add Plane", "P", "object.add_single_plane", {}),
-    ("Add Cube", "C", "object.add_single_cube", {}),
-    ("Add Grease Pencil", "G", "object.add_gp_stroke", {}),
+    ("Vertex", "object.add_single_vertex", {}),
+    ("Plane", "object.add_single_plane", {}),
+    ("Cube", "object.add_single_cube", {}),
+    ("Empty", "object.add_single_empty", {}),
+    ("GP", "object.add_gp_stroke", {}),
 ]
 
-ICON_SEGMENTS = {
-    'P': [
-        ((-5, -4), (5, -4)), ((5, -4), (5, 4)),
-        ((5, 4), (-5, 4)), ((-5, 4), (-5, -4)),
-    ],
-    # Isometric cube: outer hexagon + 3 spokes from center, like a die/cube icon.
-    'C': [
-        ((0, 6), (5, 3)), ((5, 3), (5, -3)), ((5, -3), (0, -6)),
-        ((0, -6), (-5, -3)), ((-5, -3), (-5, 3)), ((-5, 3), (0, 6)),
-        ((0, 0), (5, 3)), ((0, 0), (0, -6)), ((0, 0), (-5, 3)),
-    ],
-}
-
-def _gp_stroke_curve():
-    pts = []
-    for i in range(11):
-        angle = math.radians(-40 + 300 * i / 10)
-        pts.append((4.5 * math.cos(angle), 4.5 * math.sin(angle)))
-    return pts
-
-
-def _gp_stroke_arrowhead():
-    tip = (4.5 * math.cos(math.radians(-40)), 4.5 * math.sin(math.radians(-40)))
-    return [
-        ((tip[0] - 2.6, tip[1] + 1.6), tip),
-        ((tip[0] - 0.3, tip[1] - 2.8), tip),
-    ]
-
-
-ICON_CURVES = {
-    'G': _gp_stroke_curve(),
-}
-
-ICON_SEGMENTS_EXTRA = {
-    'G': _gp_stroke_arrowhead(),
-}
-
-CIRCLE_D = 22
-CIRCLE_GAP_X = 6
+ADD_BUTTON_WIDTH_FACTOR = 0.7
+ADD_BUTTON_GAP_X = 6
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 
@@ -176,31 +140,6 @@ def _draw_capsule_local(p1, p2, radius, cx, cy, scale, color):
     gpu.state.blend_set('NONE')
 
 
-ICON_STROKE_RADIUS = 0.9
-ICON_COLOR = (1.0, 1.0, 1.0, 1.0)
-
-
-def _draw_icon(code, cx, cy, scale=1.0):
-    if code == 'V':
-        _draw_circle(cx, cy, 2.2 * scale, ICON_COLOR)
-        return
-
-    curve = ICON_CURVES.get(code)
-    if curve:
-        for i in range(len(curve) - 1):
-            _draw_capsule_local(curve[i], curve[i + 1], ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
-
-    segments = ICON_SEGMENTS.get(code)
-    if segments:
-        for p1, p2 in segments:
-            _draw_capsule_local(p1, p2, ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
-
-    extra = ICON_SEGMENTS_EXTRA.get(code)
-    if extra:
-        for p1, p2 in extra:
-            _draw_capsule_local(p1, p2, ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
-
-
 class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     bl_idname = "view3d.best_controls_overlay"
     bl_label = "Best Controls Overlay"
@@ -217,8 +156,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         top_offset = TOP_OFFSET * s
         strip_margin = STRIP_MARGIN * s
         text_pad = TEXT_PAD * s
-        circle_d = CIRCLE_D * s
-        circle_gap_x = CIRCLE_GAP_X * s
+        add_gap_x = ADD_BUTTON_GAP_X * s
 
         blf.size(0, font_size)
         right_edge = region.width - strip_margin
@@ -233,18 +171,19 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         left_edge = min(b[3] for b in buttons)
         row_step = button_h + gap_y
-        top_row_center = region.height - top_offset - button_h / 2
-        circles = []
-        for i, (label, short, idname, kwargs) in enumerate(ADD_BUTTONS):
-            cy = top_row_center - i * row_step
-            cx = left_edge - circle_gap_x - circle_d / 2
-            circles.append(("CIRCLE", label, short, cx, cy, circle_d, idname, kwargs))
+        add_w = w * ADD_BUTTON_WIDTH_FACTOR
+        add_x = left_edge - add_gap_x - add_w
+        top_row_y = region.height - top_offset - button_h
+        add_buttons = []
+        for i, (label, idname, kwargs) in enumerate(ADD_BUTTONS):
+            ay = top_row_y - i * row_step
+            add_buttons.append(("ADD", label, add_x, ay, add_w, button_h, idname, kwargs))
 
-        return buttons, circles, font_size, text_pad, s
+        return buttons, add_buttons, font_size, text_pad, s
 
     def draw_callback(self, context):
         region = context.region
-        buttons, circles, font_size, text_pad, s = self.build_layout(region)
+        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region)
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
@@ -256,12 +195,15 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             blf.color(0, 0.9, 0.9, 0.9, 1.0)
             blf.draw(0, label)
 
-        for kind, label, short, cx, cy, d, idname, kwargs in circles:
-            r = d / 2
-            hovered = (mouse_x - cx) ** 2 + (mouse_y - cy) ** 2 <= r * r
+        for kind, label, x, y, w, h, idname, kwargs in add_buttons:
+            hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
             color = (0.25, 0.55, 0.95, 1.0) if hovered else (0.13, 0.42, 0.85, 0.95)
-            _draw_circle(cx, cy, r, color)
-            _draw_icon(short, cx, cy, scale=s)
+            _draw_pill(x, y, w, h, color)
+            blf.size(0, font_size)
+            text_w = blf.dimensions(0, label)[0]
+            blf.position(0, x + (w - text_w) / 2, y + (h - font_size) / 2 + 1, 0)
+            blf.color(0, 1.0, 1.0, 1.0, 1.0)
+            blf.draw(0, label)
 
     def modal(self, context, event):
         if context.area:
@@ -273,16 +215,15 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
-            buttons, circles, _, _, _ = self.build_layout(context.region)
+            buttons, add_buttons, _, _, _ = self.build_layout(context.region)
 
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if x <= mx <= x + w and y <= my <= y + h:
                     self._invoke_op(idname, kwargs)
                     return {'RUNNING_MODAL'}
 
-            for kind, label, short, cx, cy, d, idname, kwargs in circles:
-                r = d / 2
-                if (mx - cx) ** 2 + (my - cy) ** 2 <= r * r:
+            for kind, label, x, y, w, h, idname, kwargs in add_buttons:
+                if x <= mx <= x + w and y <= my <= y + h:
                     self._invoke_op(idname, kwargs)
                     return {'RUNNING_MODAL'}
 

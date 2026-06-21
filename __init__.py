@@ -28,6 +28,7 @@ from . operators import (
     OBJECT_OT_add_single_vertex,
     OBJECT_OT_add_single_plane,
     OBJECT_OT_add_single_cube,
+    OBJECT_OT_add_single_empty,
     OBJECT_OT_add_gp_stroke,
     OBJECT_OT_add_decimate_modifier,
 )
@@ -57,6 +58,7 @@ classes = (
     OBJECT_OT_add_single_vertex,
     OBJECT_OT_add_single_plane,
     OBJECT_OT_add_single_cube,
+    OBJECT_OT_add_single_empty,
     OBJECT_OT_add_gp_stroke,
     OBJECT_OT_add_decimate_modifier,
     VIEW3D_PT_move_to_active_collection,
