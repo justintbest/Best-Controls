@@ -86,12 +86,11 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     def build_layout(self, region):
         blf.size(0, FONT_SIZE)
         right_edge = region.width - STRIP_MARGIN
+        w = max(blf.dimensions(0, label)[0] for label, _, _, _ in BUTTONS) + 2 * TEXT_PAD
+        x = right_edge - w
         y = region.height - TOP_OFFSET
         buttons = []
         for label, short, idname, kwargs in BUTTONS:
-            text_w = blf.dimensions(0, label)[0]
-            w = text_w + 2 * TEXT_PAD
-            x = right_edge - w
             y -= BUTTON_H
             buttons.append(("BUTTON", label, short, x, y, w, BUTTON_H, idname, kwargs))
             y -= GAP_Y
