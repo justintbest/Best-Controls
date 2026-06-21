@@ -35,8 +35,13 @@ ADD_BUTTONS = [
     ("Plane", "object.add_single_plane", {}),
     ("Cube", "object.add_single_cube", {}),
     ("Empty", "object.add_single_empty", {}),
+    ("Point Light", "object.add_point_light", {}),
+    ("Area Light", "object.add_area_light", {}),
+    ("Sun", "object.add_sun_light", {}),
     ("GP", "object.add_gp_stroke", {}),
 ]
+
+YELLOW_ADD_BUTTON_LABELS = {"Point Light", "Area Light", "Sun"}
 
 ADD_BUTTON_WIDTH_FACTOR = 0.7
 ADD_BUTTON_GAP_X = 6
@@ -203,7 +208,10 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         for kind, label, x, y, w, h, idname, kwargs in add_buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            color = (0.40, 0.50, 0.62, 1.0) if hovered else (0.30, 0.40, 0.50, 0.95)
+            if label in YELLOW_ADD_BUTTON_LABELS:
+                color = (0.62, 0.58, 0.38, 1.0) if hovered else (0.50, 0.46, 0.28, 0.95)
+            else:
+                color = (0.40, 0.50, 0.62, 1.0) if hovered else (0.30, 0.40, 0.50, 0.95)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
             text_w = blf.dimensions(0, label)[0]

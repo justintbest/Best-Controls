@@ -53,6 +53,39 @@ class OBJECT_OT_add_single_empty(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class OBJECT_OT_add_point_light(bpy.types.Operator):
+    bl_idname = "object.add_point_light"
+    bl_label = "Add Point Light"
+    bl_description = "Add a point light at the 3D cursor"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.light_add(type='POINT', location=context.scene.cursor.location)
+        return {'FINISHED'}
+
+
+class OBJECT_OT_add_area_light(bpy.types.Operator):
+    bl_idname = "object.add_area_light"
+    bl_label = "Add Area Light"
+    bl_description = "Add an area light at the 3D cursor"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.light_add(type='AREA', location=context.scene.cursor.location)
+        return {'FINISHED'}
+
+
+class OBJECT_OT_add_sun_light(bpy.types.Operator):
+    bl_idname = "object.add_sun_light"
+    bl_label = "Add Sun"
+    bl_description = "Add a sun light at the 3D cursor"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        bpy.ops.object.light_add(type='SUN', location=context.scene.cursor.location)
+        return {'FINISHED'}
+
+
 class OBJECT_OT_add_gp_stroke(bpy.types.Operator):
     bl_idname = "object.add_gp_stroke"
     bl_label = "Add Grease Pencil"
