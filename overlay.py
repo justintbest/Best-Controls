@@ -156,7 +156,14 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     _handle = None
     _running = False
 
-    def build_layout(self, region):
+    @staticmethod
+    def _ui_region_width(area):
+        if area is None:
+            return 0
+        ui_region = next((r for r in area.regions if r.type == 'UI'), None)
+        return ui_region.width if ui_region else 0
+
+    def build_layout(self, region, ui_width=0):
         s = _ui_scale()
         font_size = round(FONT_SIZE * s)
         button_h = BUTTON_H * s
@@ -167,7 +174,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         add_gap_x = ADD_BUTTON_GAP_X * s
 
         blf.size(0, font_size)
-        right_edge = region.width - strip_margin
+        right_edge = region.width - strip_margin - ui_width
         w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * text_pad
         x = right_edge - w
         y = region.height - top_offset
@@ -191,7 +198,8 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
     def draw_callback(self, context):
         region = bpy.context.region
-        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region)
+        ui_width = self._ui_region_width(bpy.context.area)
+        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region, ui_width)
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
@@ -199,7 +207,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             if label in ORANGE_BUTTON_LABELS:
                 color = (0.18, 0.12, 0.07, 1.0) if hovered else (0.10, 0.07, 0.04, 1.0)
             else:
-                color = (0.16, 0.16, 0.16, 1.0) if hovered else (0.06, 0.06, 0.06, 1.0)
+                color = (0.10, 0.10, 0.10, 1.0) if hovered else (0.02, 0.02, 0.02, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
             text_w = blf.dimensions(0, label)[0]
@@ -230,7 +238,8 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
-            buttons, add_buttons, _, _, _ = self.build_layout(context.region)
+            ui_width = self._ui_region_width(context.area)
+            buttons, add_buttons, _, _, _ = self.build_layout(context.region, ui_width)
 
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if x <= mx <= x + w and y <= my <= y + h:
