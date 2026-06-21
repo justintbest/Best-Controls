@@ -15,10 +15,10 @@ TEXT_PAD = 10
 BUTTONS = [
     ("Move to Coll.", "MAC", "object.move_to_active_collection", {}),
     ("Move to Obj.", "MAOC", "object.move_to_active_object_collection", {}),
-    ("Remap Dupes", "RD", "best.remap_duplicates", {}),
-    ("Flip X", "FX", "object.flip_x", {}),
     ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
     ("Align Cam", "ACV", "view3d.camera_to_view", {}),
+    ("Remap Dupes", "RD", "best.remap_duplicates", {}),
+    ("Flip X", "FX", "object.flip_x", {}),
     ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
     ("UV Act Quads", "UVQ", "object.uv_active_quads", {}),
     ("UV Quads Full", "UVF", "object.uv_active_quads_full", {}),
@@ -34,11 +34,11 @@ ADD_BUTTONS = [
     ("Vertex", "object.add_single_vertex", {}),
     ("Plane", "object.add_single_plane", {}),
     ("Cube", "object.add_single_cube", {}),
+    ("GP", "object.add_gp_stroke", {}),
     ("Empty", "object.add_single_empty", {}),
     ("Point Light", "object.add_point_light", {}),
     ("Area Light", "object.add_area_light", {}),
     ("Sun", "object.add_sun_light", {}),
-    ("GP", "object.add_gp_stroke", {}),
 ]
 
 YELLOW_ADD_BUTTON_LABELS = {"Point Light", "Area Light", "Sun"}
@@ -197,7 +197,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
             if label in ORANGE_BUTTON_LABELS:
-                color = (0.55, 0.40, 0.28, 1.0) if hovered else (0.42, 0.30, 0.20, 1.0)
+                color = (0.32, 0.22, 0.14, 1.0) if hovered else (0.22, 0.15, 0.09, 1.0)
             else:
                 color = (0.13, 0.13, 0.13, 1.0) if hovered else (0.02, 0.02, 0.02, 1.0)
             _draw_pill(x, y, w, h, color)
@@ -209,9 +209,9 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         for kind, label, x, y, w, h, idname, kwargs in add_buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
             if label in YELLOW_ADD_BUTTON_LABELS:
-                color = (0.62, 0.58, 0.38, 1.0) if hovered else (0.50, 0.46, 0.28, 0.95)
+                color = (0.38, 0.34, 0.18, 1.0) if hovered else (0.26, 0.23, 0.11, 1.0)
             else:
-                color = (0.40, 0.50, 0.62, 1.0) if hovered else (0.30, 0.40, 0.50, 0.95)
+                color = (0.22, 0.28, 0.36, 1.0) if hovered else (0.14, 0.19, 0.26, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
             text_w = blf.dimensions(0, label)[0]
