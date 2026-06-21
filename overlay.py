@@ -13,15 +13,17 @@ STRIP_MARGIN = 4
 TEXT_PAD = 10
 
 BUTTONS = [
-    ("Move to Active Collection", "MAC", "object.move_to_active_collection", {}),
-    ("Move to Active Object's Collection", "MAOC", "object.move_to_active_object_collection", {}),
-    ("Remap Duplicates", "RD", "best.remap_duplicates", {}),
+    ("Move to Coll.", "MAC", "object.move_to_active_collection", {}),
+    ("Move to Obj.", "MAOC", "object.move_to_active_object_collection", {}),
+    ("Remap Dupes", "RD", "best.remap_duplicates", {}),
     ("Flip X", "FX", "object.flip_x", {}),
     ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
     ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
-    ("UV Active Quads", "UVQ", "object.uv_active_quads", {}),
-    ("UV Active Quads Full", "UVF", "object.uv_active_quads_full", {}),
+    ("UV Act Quads", "UVQ", "object.uv_active_quads", {}),
+    ("UV Quads Full", "UVF", "object.uv_active_quads_full", {}),
 ]
+
+REFERENCE_LABEL = "Flip Camera X"
 
 ADD_BUTTONS = [
     ("Add Vertex", "V", "object.add_single_vertex", {}),
@@ -86,7 +88,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     def build_layout(self, region):
         blf.size(0, FONT_SIZE)
         right_edge = region.width - STRIP_MARGIN
-        w = max(blf.dimensions(0, label)[0] for label, _, _, _ in BUTTONS) + 2 * TEXT_PAD
+        w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * TEXT_PAD
         x = right_edge - w
         y = region.height - TOP_OFFSET
         buttons = []
