@@ -16,7 +16,7 @@ BUTTONS = [
     ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
     ("Align Cam", "ACV", "view3d.camera_to_view", {}),
     ("Move to Coll.", "MAC", "object.move_to_active_collection", {}),
-    ("Move to Obj.", "MAOC", "object.move_to_active_object_collection", {}),
+    ("Copy Obj Coll.", "MAOC", "object.move_to_active_object_collection", {}),
     ("Remap Dupes", "RD", "best.remap_duplicates", {}),
     ("Flip X", "FX", "object.flip_x", {}),
     ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
