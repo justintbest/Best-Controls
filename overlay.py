@@ -47,9 +47,10 @@ ICON_SEGMENTS = {
         ((-5, -5), (-1, -1)), ((1, -5), (5, -1)),
         ((1, 1), (5, 5)), ((-5, 1), (-1, 5)),
     ],
-    'G': [
-        ((-6, -3), (-2, 4)), ((-2, 4), (2, -4)), ((2, -4), (6, 3)),
-    ],
+}
+
+ICON_CURVES = {
+    'G': [(-6 + 12 * i / 16, 4 * math.sin(math.pi * i / 4)) for i in range(17)],
 }
 
 CIRCLE_D = 22
@@ -58,7 +59,12 @@ CIRCLE_GAP_X = 6
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 
 
-def _rounded_rect_verts(x, y, w, h, r, segments=6):
+def _ui_scale():
+    prefs = bpy.context.preferences
+    return prefs.view.ui_scale * prefs.system.pixel_size
+
+
+def _rounded_rect_verts(x, y, w, h, r, segments=20):
     r = min(r, w / 2, h / 2)
     corners = [
         (x + w - r, y + r, -90, 0),
@@ -83,7 +89,7 @@ def _draw_pill(x, y, w, h, color):
     gpu.state.blend_set('NONE')
 
 
-def _draw_circle(cx, cy, radius, color, segments=20):
+def _draw_circle(cx, cy, radius, color, segments=36):
     verts = [(cx, cy)]
     for i in range(segments + 1):
         t = math.radians(360 * i / segments)
@@ -97,21 +103,28 @@ def _draw_circle(cx, cy, radius, color, segments=20):
 
 def _draw_icon(code, cx, cy, scale=1.0):
     if code == 'V':
-        _draw_circle(cx, cy, 2.2 * scale, (1.0, 1.0, 1.0, 1.0), segments=10)
+        _draw_circle(cx, cy, 2.2 * scale, (1.0, 1.0, 1.0, 1.0), segments=24)
         return
 
-    segments = ICON_SEGMENTS.get(code)
-    if not segments:
-        return
-    verts = []
-    for (x1, y1), (x2, y2) in segments:
-        verts.append((cx + x1 * scale, cy + y1 * scale))
-        verts.append((cx + x2 * scale, cy + y2 * scale))
-    batch = batch_for_shader(_shader, 'LINES', {"pos": verts})
     gpu.state.blend_set('ALPHA')
-    gpu.state.line_width_set(1.5)
+    gpu.state.line_width_set(max(1.6 * scale, 1.0))
     _shader.uniform_float("color", (1.0, 1.0, 1.0, 1.0))
-    batch.draw(_shader)
+
+    curve = ICON_CURVES.get(code)
+    if curve:
+        verts = [(cx + x * scale, cy + y * scale) for x, y in curve]
+        batch = batch_for_shader(_shader, 'LINE_STRIP', {"pos": verts})
+        batch.draw(_shader)
+
+    segments = ICON_SEGMENTS.get(code)
+    if segments:
+        verts = []
+        for (x1, y1), (x2, y2) in segments:
+            verts.append((cx + x1 * scale, cy + y1 * scale))
+            verts.append((cx + x2 * scale, cy + y2 * scale))
+        batch = batch_for_shader(_shader, 'LINES', {"pos": verts})
+        batch.draw(_shader)
+
     gpu.state.line_width_set(1.0)
     gpu.state.blend_set('NONE')
 
@@ -125,39 +138,49 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     _running = False
 
     def build_layout(self, region):
-        blf.size(0, FONT_SIZE)
-        right_edge = region.width - STRIP_MARGIN
-        w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * TEXT_PAD
+        s = _ui_scale()
+        font_size = round(FONT_SIZE * s)
+        button_h = BUTTON_H * s
+        gap_y = GAP_Y * s
+        top_offset = TOP_OFFSET * s
+        strip_margin = STRIP_MARGIN * s
+        text_pad = TEXT_PAD * s
+        circle_d = CIRCLE_D * s
+        circle_gap_x = CIRCLE_GAP_X * s
+
+        blf.size(0, font_size)
+        right_edge = region.width - strip_margin
+        w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * text_pad
         x = right_edge - w
-        y = region.height - TOP_OFFSET
+        y = region.height - top_offset
         buttons = []
         for label, short, idname, kwargs in BUTTONS:
-            y -= BUTTON_H
-            buttons.append(("BUTTON", label, short, x, y, w, BUTTON_H, idname, kwargs))
-            y -= GAP_Y
+            y -= button_h
+            buttons.append(("BUTTON", label, short, x, y, w, button_h, idname, kwargs))
+            y -= gap_y
 
         left_edge = min(b[3] for b in buttons)
-        row_step = BUTTON_H + GAP_Y
-        top_row_center = region.height - TOP_OFFSET - BUTTON_H / 2
+        row_step = button_h + gap_y
+        top_row_center = region.height - top_offset - button_h / 2
         circles = []
         for i, (label, short, idname, kwargs) in enumerate(ADD_BUTTONS):
             cy = top_row_center - i * row_step
-            cx = left_edge - CIRCLE_GAP_X - CIRCLE_D / 2
-            circles.append(("CIRCLE", label, short, cx, cy, CIRCLE_D, idname, kwargs))
+            cx = left_edge - circle_gap_x - circle_d / 2
+            circles.append(("CIRCLE", label, short, cx, cy, circle_d, idname, kwargs))
 
-        return buttons, circles
+        return buttons, circles, font_size, text_pad, s
 
     def draw_callback(self, context):
         region = context.region
-        buttons, circles = self.build_layout(region)
+        buttons, circles, font_size, text_pad, s = self.build_layout(region)
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
             color = (0.32, 0.32, 0.32, 0.92) if hovered else (0.13, 0.13, 0.13, 0.85)
             _draw_pill(x, y, w, h, color)
-            blf.size(0, FONT_SIZE)
-            blf.position(0, x + TEXT_PAD, y + (h - FONT_SIZE) / 2 + 1, 0)
+            blf.size(0, font_size)
+            blf.position(0, x + text_pad, y + (h - font_size) / 2 + 1, 0)
             blf.color(0, 0.9, 0.9, 0.9, 1.0)
             blf.draw(0, label)
 
@@ -166,7 +189,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             hovered = (mouse_x - cx) ** 2 + (mouse_y - cy) ** 2 <= r * r
             color = (0.25, 0.55, 0.95, 1.0) if hovered else (0.13, 0.42, 0.85, 0.95)
             _draw_circle(cx, cy, r, color)
-            _draw_icon(short, cx, cy)
+            _draw_icon(short, cx, cy, scale=s)
 
     def modal(self, context, event):
         if context.area:
@@ -178,7 +201,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
-            buttons, circles = self.build_layout(context.region)
+            buttons, circles, _, _, _ = self.build_layout(context.region)
 
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if x <= mx <= x + w and y <= my <= y + h:
