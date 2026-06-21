@@ -58,56 +58,74 @@ CIRCLE_GAP_X = 6
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 
+_SDF_VERT = """
+uniform mat4 ModelViewProjectionMatrix;
+in vec2 pos;
+in vec2 local;
+out vec2 v_local;
+void main()
+{
+    gl_Position = ModelViewProjectionMatrix * vec4(pos, 0.0, 1.0);
+    v_local = local;
+}
+"""
+
+_SDF_FRAG = """
+uniform vec4 color;
+uniform vec2 halfSize;
+uniform float radius;
+in vec2 v_local;
+out vec4 fragColor;
+void main()
+{
+    vec2 d = abs(v_local) - (halfSize - vec2(radius));
+    float dist = length(max(d, 0.0)) - radius;
+    float alpha = 1.0 - smoothstep(-1.0, 1.0, dist);
+    fragColor = vec4(color.rgb, color.a * alpha);
+}
+"""
+
+_sdf_shader = gpu.types.GPUShader(_SDF_VERT, _SDF_FRAG)
+
 
 def _ui_scale():
     prefs = bpy.context.preferences
     return prefs.view.ui_scale * prefs.system.pixel_size
 
 
-def _rounded_rect_verts(x, y, w, h, r, segments=20):
-    r = min(r, w / 2, h / 2)
-    corners = [
-        (x + w - r, y + r, -90, 0),
-        (x + w - r, y + h - r, 0, 90),
-        (x + r, y + h - r, 90, 180),
-        (x + r, y + r, 180, 270),
-    ]
-    verts = []
-    for cx, cy, a0, a1 in corners:
-        for i in range(segments + 1):
-            t = math.radians(a0 + (a1 - a0) * i / segments)
-            verts.append((cx + r * math.cos(t), cy + r * math.sin(t)))
-    return verts
+def _draw_rounded_quad(x, y, w, h, radius, color):
+    half_w, half_h = w / 2, h / 2
+    cx, cy = x + half_w, y + half_h
+    pos = [(cx - half_w, cy - half_h), (cx + half_w, cy - half_h),
+           (cx + half_w, cy + half_h), (cx - half_w, cy + half_h)]
+    local = [(-half_w, -half_h), (half_w, -half_h), (half_w, half_h), (-half_w, half_h)]
+    indices = [(0, 1, 2), (2, 3, 0)]
+    batch = batch_for_shader(_sdf_shader, 'TRIS', {"pos": pos, "local": local}, indices=indices)
+    gpu.state.blend_set('ALPHA')
+    _sdf_shader.bind()
+    _sdf_shader.uniform_float("color", color)
+    _sdf_shader.uniform_float("halfSize", (half_w, half_h))
+    _sdf_shader.uniform_float("radius", min(radius, half_w, half_h))
+    batch.draw(_sdf_shader)
+    gpu.state.blend_set('NONE')
 
 
 def _draw_pill(x, y, w, h, color):
-    verts = _rounded_rect_verts(x, y, w, h, RADIUS)
-    batch = batch_for_shader(_shader, 'TRI_FAN', {"pos": verts})
-    gpu.state.blend_set('ALPHA')
-    _shader.uniform_float("color", color)
-    batch.draw(_shader)
-    gpu.state.blend_set('NONE')
+    _draw_rounded_quad(x, y, w, h, RADIUS, color)
 
 
-def _draw_circle(cx, cy, radius, color, segments=36):
-    verts = [(cx, cy)]
-    for i in range(segments + 1):
-        t = math.radians(360 * i / segments)
-        verts.append((cx + radius * math.cos(t), cy + radius * math.sin(t)))
-    batch = batch_for_shader(_shader, 'TRI_FAN', {"pos": verts})
-    gpu.state.blend_set('ALPHA')
-    _shader.uniform_float("color", color)
-    batch.draw(_shader)
-    gpu.state.blend_set('NONE')
+def _draw_circle(cx, cy, radius, color):
+    _draw_rounded_quad(cx - radius, cy - radius, radius * 2, radius * 2, radius, color)
 
 
 def _draw_icon(code, cx, cy, scale=1.0):
     if code == 'V':
-        _draw_circle(cx, cy, 2.2 * scale, (1.0, 1.0, 1.0, 1.0), segments=24)
+        _draw_circle(cx, cy, 2.2 * scale, (1.0, 1.0, 1.0, 1.0))
         return
 
     gpu.state.blend_set('ALPHA')
     gpu.state.line_width_set(max(1.6 * scale, 1.0))
+    _shader.bind()
     _shader.uniform_float("color", (1.0, 1.0, 1.0, 1.0))
 
     curve = ICON_CURVES.get(code)
