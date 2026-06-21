@@ -47,8 +47,17 @@ ICON_SEGMENTS = {
     ],
 }
 
+def _gp_stroke_curve():
+    pts = []
+    for i in range(13):
+        angle = math.radians(100 + 290 * i / 12)
+        pts.append((-2 + 2.4 * math.cos(angle), 1.5 + 2.4 * math.sin(angle)))
+    pts.append((5.5, -3.5))
+    return pts
+
+
 ICON_CURVES = {
-    'G': [(-6 + 12 * i / 16, 4 * math.sin(math.pi * i / 4)) for i in range(17)],
+    'G': _gp_stroke_curve(),
 }
 
 CIRCLE_D = 22
