@@ -21,11 +21,19 @@ BUTTONS = [
     ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
     ("UV Active Quads", "UVQ", "object.uv_active_quads", {}),
     ("UV Active Quads Full", "UVF", "object.uv_active_quads_full", {}),
-    ("Add Vertex", "+V", "object.add_single_vertex", {}),
-    ("Add Plane", "+P", "object.add_single_plane", {}),
-    ("Add Cube", "+C", "object.add_single_cube", {}),
-    ("Add Grease Pencil", "+GP", "object.add_gp_stroke", {}),
 ]
+
+ADD_BUTTONS = [
+    ("Add Vertex", "V", "object.add_single_vertex", {}),
+    ("Add Plane", "P", "object.add_single_plane", {}),
+    ("Add Cube", "C", "object.add_single_cube", {}),
+    ("Add Grease Pencil", "G", "object.add_gp_stroke", {}),
+]
+
+CIRCLE_D = 22
+CIRCLE_GAP_Y = 5
+CIRCLE_GAP_X = 6
+CIRCLE_FONT_SIZE = 11
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 
@@ -55,6 +63,18 @@ def _draw_pill(x, y, w, h, color):
     gpu.state.blend_set('NONE')
 
 
+def _draw_circle(cx, cy, radius, color, segments=20):
+    verts = [(cx, cy)]
+    for i in range(segments + 1):
+        t = math.radians(360 * i / segments)
+        verts.append((cx + radius * math.cos(t), cy + radius * math.sin(t)))
+    batch = batch_for_shader(_shader, 'TRI_FAN', {"pos": verts})
+    gpu.state.blend_set('ALPHA')
+    _shader.uniform_float("color", color)
+    batch.draw(_shader)
+    gpu.state.blend_set('NONE')
+
+
 class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     bl_idname = "view3d.best_controls_overlay"
     bl_label = "Best Controls Overlay"
@@ -75,11 +95,21 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             y -= BUTTON_H
             buttons.append(("BUTTON", label, short, x, y, w, BUTTON_H, idname, kwargs))
             y -= GAP_Y
-        return buttons
+
+        left_edge = min(b[3] for b in buttons)
+        circles = []
+        cy = region.height - TOP_OFFSET - BUTTON_H / 2 + CIRCLE_D / 2
+        for label, short, idname, kwargs in ADD_BUTTONS:
+            cy -= CIRCLE_D
+            cx = left_edge - CIRCLE_GAP_X - CIRCLE_D / 2
+            circles.append(("CIRCLE", label, short, cx, cy, CIRCLE_D, idname, kwargs))
+            cy -= CIRCLE_GAP_Y
+
+        return buttons, circles
 
     def draw_callback(self, context):
         region = context.region
-        buttons = self.build_layout(region)
+        buttons, circles = self.build_layout(region)
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
@@ -91,6 +121,17 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             blf.color(0, 0.9, 0.9, 0.9, 1.0)
             blf.draw(0, label)
 
+        for kind, label, short, cx, cy, d, idname, kwargs in circles:
+            r = d / 2
+            hovered = (mouse_x - cx) ** 2 + (mouse_y - cy) ** 2 <= r * r
+            color = (0.25, 0.55, 0.95, 1.0) if hovered else (0.13, 0.42, 0.85, 0.95)
+            _draw_circle(cx, cy, r, color)
+            blf.size(0, CIRCLE_FONT_SIZE)
+            text_w, text_h = blf.dimensions(0, short)
+            blf.position(0, cx - text_w / 2, cy - text_h / 2, 0)
+            blf.color(0, 1.0, 1.0, 1.0, 1.0)
+            blf.draw(0, short)
+
     def modal(self, context, event):
         if context.area:
             context.area.tag_redraw()
@@ -101,19 +142,27 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
-            buttons = self.build_layout(context.region)
+            buttons, circles = self.build_layout(context.region)
+
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
-                if kind != "BUTTON":
-                    continue
                 if x <= mx <= x + w and y <= my <= y + h:
-                    op_cat, op_name = idname.split(".")
-                    try:
-                        getattr(getattr(bpy.ops, op_cat), op_name)(**kwargs)
-                    except Exception as exc:
-                        self.report({'WARNING'}, str(exc))
+                    self._invoke_op(idname, kwargs)
+                    return {'RUNNING_MODAL'}
+
+            for kind, label, short, cx, cy, d, idname, kwargs in circles:
+                r = d / 2
+                if (mx - cx) ** 2 + (my - cy) ** 2 <= r * r:
+                    self._invoke_op(idname, kwargs)
                     return {'RUNNING_MODAL'}
 
         return {'PASS_THROUGH'}
+
+    def _invoke_op(self, idname, kwargs):
+        op_cat, op_name = idname.split(".")
+        try:
+            getattr(getattr(bpy.ops, op_cat), op_name)(**kwargs)
+        except Exception as exc:
+            self.report({'WARNING'}, str(exc))
 
     def invoke(self, context, event):
         if VIEW3D_OT_best_controls_overlay._running:
