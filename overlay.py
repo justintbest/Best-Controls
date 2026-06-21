@@ -202,7 +202,8 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
                 color = (0.16, 0.16, 0.16, 1.0) if hovered else (0.06, 0.06, 0.06, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
-            blf.position(0, x + text_pad, y + (h - font_size) / 2 + 1, 0)
+            text_w = blf.dimensions(0, label)[0]
+            blf.position(0, x + (w - text_w) / 2, y + (h - font_size) / 2 + 1, 0)
             blf.color(0, 0.9, 0.9, 0.9, 1.0)
             blf.draw(0, label)
 
