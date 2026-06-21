@@ -2,6 +2,24 @@ import bpy
 import bmesh
 
 
+class OBJECT_OT_add_decimate_modifier(bpy.types.Operator):
+    bl_idname = "object.add_decimate_modifier"
+    bl_label = "Add Decimate Modifier"
+    bl_description = "Add a Decimate modifier to the active object with the given ratio"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    ratio: bpy.props.FloatProperty(name="Ratio", default=0.5, min=0.0, max=1.0)
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None
+
+    def execute(self, context):
+        mod = context.active_object.modifiers.new(name="Decimate", type='DECIMATE')
+        mod.ratio = self.ratio
+        return {'FINISHED'}
+
+
 class OBJECT_OT_flip_x(bpy.types.Operator):
     bl_idname = "object.flip_x"
     bl_label = "Flip X"

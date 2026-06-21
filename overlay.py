@@ -21,6 +21,8 @@ BUTTONS = [
     ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
     ("UV Act Quads", "UVQ", "object.uv_active_quads", {}),
     ("UV Quads Full", "UVF", "object.uv_active_quads_full", {}),
+    ("Dec 0.2", "D2", "object.add_decimate_modifier", {"ratio": 0.2}),
+    ("Dec 0.5", "D5", "object.add_decimate_modifier", {"ratio": 0.5}),
 ]
 
 REFERENCE_LABEL = "Flip Camera X"
