@@ -32,10 +32,27 @@ ADD_BUTTONS = [
     ("Add Grease Pencil", "G", "object.add_gp_stroke", {}),
 ]
 
+ICON_SEGMENTS = {
+    'P': [
+        ((-5, -4), (5, -4)), ((5, -4), (5, 4)),
+        ((5, 4), (-5, 4)), ((-5, 4), (-5, -4)),
+    ],
+    'C': [
+        ((-5, -5), (1, -5)), ((1, -5), (1, 1)),
+        ((1, 1), (-5, 1)), ((-5, 1), (-5, -5)),
+        ((-1, -1), (5, -1)), ((5, -1), (5, 5)),
+        ((5, 5), (-1, 5)), ((-1, 5), (-1, -1)),
+        ((-5, -5), (-1, -1)), ((1, -5), (5, -1)),
+        ((1, 1), (5, 5)), ((-5, 1), (-1, 5)),
+    ],
+    'G': [
+        ((-6, -3), (-2, 4)), ((-2, 4), (2, -4)), ((2, -4), (6, 3)),
+    ],
+}
+
 CIRCLE_D = 22
 CIRCLE_GAP_Y = 5
 CIRCLE_GAP_X = 6
-CIRCLE_FONT_SIZE = 11
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 
@@ -74,6 +91,27 @@ def _draw_circle(cx, cy, radius, color, segments=20):
     gpu.state.blend_set('ALPHA')
     _shader.uniform_float("color", color)
     batch.draw(_shader)
+    gpu.state.blend_set('NONE')
+
+
+def _draw_icon(code, cx, cy, scale=1.0):
+    if code == 'V':
+        _draw_circle(cx, cy, 2.2 * scale, (1.0, 1.0, 1.0, 1.0), segments=10)
+        return
+
+    segments = ICON_SEGMENTS.get(code)
+    if not segments:
+        return
+    verts = []
+    for (x1, y1), (x2, y2) in segments:
+        verts.append((cx + x1 * scale, cy + y1 * scale))
+        verts.append((cx + x2 * scale, cy + y2 * scale))
+    batch = batch_for_shader(_shader, 'LINES', {"pos": verts})
+    gpu.state.blend_set('ALPHA')
+    gpu.state.line_width_set(1.5)
+    _shader.uniform_float("color", (1.0, 1.0, 1.0, 1.0))
+    batch.draw(_shader)
+    gpu.state.line_width_set(1.0)
     gpu.state.blend_set('NONE')
 
 
@@ -127,11 +165,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
             hovered = (mouse_x - cx) ** 2 + (mouse_y - cy) ** 2 <= r * r
             color = (0.25, 0.55, 0.95, 1.0) if hovered else (0.13, 0.42, 0.85, 0.95)
             _draw_circle(cx, cy, r, color)
-            blf.size(0, CIRCLE_FONT_SIZE)
-            text_w, text_h = blf.dimensions(0, short)
-            blf.position(0, cx - text_w / 2, cy - text_h / 2, 0)
-            blf.color(0, 1.0, 1.0, 1.0, 1.0)
-            blf.draw(0, short)
+            _draw_icon(short, cx, cy)
 
     def modal(self, context, event):
         if context.area:
