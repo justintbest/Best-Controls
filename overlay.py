@@ -4,28 +4,28 @@ import gpu
 import blf
 from gpu_extras.batch import batch_for_shader
 
-FONT_SIZE = 12
-BUTTON_H = 28
-RADIUS = 14
-H_PAD = 16
-GAP_X = 8
-GAP_Y = 8
-MARGIN = 24
-MAX_ROW_WIDTH = 640
+FONT_SIZE = 9
+TOOLTIP_FONT_SIZE = 12
+BUTTON_H = 30
+RADIUS = 8
+GAP_Y = 6
+MARGIN_TOP = 60
+STRIP_WIDTH = 34
+STRIP_MARGIN = 4
 
 BUTTONS = [
-    ("Move to Active Collection", "object.move_to_active_collection", {}),
-    ("Move to Active Object's Collection", "object.move_to_active_object_collection", {}),
-    ("Remap Duplicates", "best.remap_duplicates", {}),
-    ("Flip X", "object.flip_x", {}),
-    ("Flip Camera X", "object.flip_camera_x", {}),
-    ("GP to Mesh", "object.gp_to_mesh", {}),
-    ("UV Active Quads", "object.uv_active_quads", {}),
-    ("UV Active Quads Full", "object.uv_active_quads_full", {}),
-    ("Add Vertex", "object.add_single_vertex", {}),
-    ("Add Plane", "object.add_single_plane", {}),
-    ("Add Cube", "object.add_single_cube", {}),
-    ("Add Grease Pencil", "object.add_gp_stroke", {}),
+    ("Move to Active Collection", "MAC", "object.move_to_active_collection", {}),
+    ("Move to Active Object's Collection", "MAOC", "object.move_to_active_object_collection", {}),
+    ("Remap Duplicates", "RD", "best.remap_duplicates", {}),
+    ("Flip X", "FX", "object.flip_x", {}),
+    ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
+    ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
+    ("UV Active Quads", "UVQ", "object.uv_active_quads", {}),
+    ("UV Active Quads Full", "UVF", "object.uv_active_quads_full", {}),
+    ("Add Vertex", "+V", "object.add_single_vertex", {}),
+    ("Add Plane", "+P", "object.add_single_plane", {}),
+    ("Add Cube", "+C", "object.add_single_cube", {}),
+    ("Add Grease Pencil", "+GP", "object.add_gp_stroke", {}),
 ]
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
@@ -65,34 +65,14 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     _running = False
 
     def build_layout(self, region):
-        blf.size(0, FONT_SIZE)
-        max_row_w = min(region.width - 2 * MARGIN, MAX_ROW_WIDTH)
-
-        rows = []
-        row = []
-        row_w = 0
-        for label, idname, kwargs in BUTTONS:
-            text_w = blf.dimensions(0, label)[0]
-            btn_w = text_w + 2 * H_PAD
-            extra = GAP_X if row else 0
-            if row and row_w + extra + btn_w > max_row_w:
-                rows.append(row)
-                row = []
-                row_w = 0
-                extra = 0
-            row.append((label, idname, kwargs, btn_w))
-            row_w += extra + btn_w
-        if row:
-            rows.append(row)
-
+        x = region.width - STRIP_WIDTH - STRIP_MARGIN
+        w = STRIP_WIDTH
+        y = region.height - MARGIN_TOP
         buttons = []
-        y = MARGIN
-        for row in reversed(rows):
-            x = MARGIN
-            for label, idname, kwargs, btn_w in row:
-                buttons.append(("BUTTON", label, x, y, btn_w, BUTTON_H, idname, kwargs))
-                x += btn_w + GAP_X
-            y += BUTTON_H + GAP_Y
+        for label, short, idname, kwargs in BUTTONS:
+            y -= BUTTON_H
+            buttons.append(("BUTTON", label, short, x, y, w, BUTTON_H, idname, kwargs))
+            y -= GAP_Y
         return buttons
 
     def draw_callback(self, context):
@@ -100,13 +80,30 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         buttons = self.build_layout(region)
         mouse_x, mouse_y = self.mouse_pos
 
-        for kind, label, x, y, w, h, idname, kwargs in buttons:
+        hovered_item = None
+        for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
+            if hovered:
+                hovered_item = (label, x, y, w, h)
             color = (0.32, 0.32, 0.32, 0.92) if hovered else (0.13, 0.13, 0.13, 0.85)
             _draw_pill(x, y, w, h, color)
-            blf.position(0, x + H_PAD, y + (h - FONT_SIZE) / 2 + 1, 0)
             blf.size(0, FONT_SIZE)
+            text_w = blf.dimensions(0, short)[0]
+            blf.position(0, x + (w - text_w) / 2, y + (h - FONT_SIZE) / 2 + 1, 0)
             blf.color(0, 0.9, 0.9, 0.9, 1.0)
+            blf.draw(0, short)
+
+        if hovered_item:
+            label, x, y, w, h = hovered_item
+            blf.size(0, TOOLTIP_FONT_SIZE)
+            text_w = blf.dimensions(0, label)[0]
+            tip_pad = 8
+            tip_w = text_w + 2 * tip_pad
+            tip_x = x - tip_w - 6
+            tip_y = y
+            _draw_pill(tip_x, tip_y, tip_w, h, (0.08, 0.08, 0.08, 0.95))
+            blf.position(0, tip_x + tip_pad, tip_y + (h - TOOLTIP_FONT_SIZE) / 2 + 1, 0)
+            blf.color(0, 1.0, 1.0, 1.0, 1.0)
             blf.draw(0, label)
 
     def modal(self, context, event):
@@ -120,7 +117,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
             buttons = self.build_layout(context.region)
-            for kind, label, x, y, w, h, idname, kwargs in buttons:
+            for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if kind != "BUTTON":
                     continue
                 if x <= mx <= x + w and y <= my <= y + h:
