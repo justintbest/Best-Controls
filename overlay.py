@@ -85,6 +85,26 @@ void main()
 
 _sdf_shader = gpu.types.GPUShader(_SDF_VERT, _SDF_FRAG)
 
+_CAPSULE_FRAG = """
+uniform vec4 color;
+uniform vec2 p1;
+uniform vec2 p2;
+uniform float radius;
+in vec2 v_local;
+out vec4 fragColor;
+void main()
+{
+    vec2 pa = v_local - p1;
+    vec2 ba = p2 - p1;
+    float h = clamp(dot(pa, ba) / max(dot(ba, ba), 0.0001), 0.0, 1.0);
+    float dist = length(pa - ba * h) - radius;
+    float alpha = 1.0 - smoothstep(-0.75, 0.75, dist);
+    fragColor = vec4(color.rgb, color.a * alpha);
+}
+"""
+
+_capsule_shader = gpu.types.GPUShader(_SDF_VERT, _CAPSULE_FRAG)
+
 
 def _ui_scale():
     prefs = bpy.context.preferences
@@ -116,33 +136,44 @@ def _draw_circle(cx, cy, radius, color):
     _draw_rounded_quad(cx - radius, cy - radius, radius * 2, radius * 2, radius, color)
 
 
+def _draw_capsule_local(p1, p2, radius, cx, cy, scale, color):
+    pad = radius + 1.5
+    minx = min(p1[0], p2[0]) - pad
+    maxx = max(p1[0], p2[0]) + pad
+    miny = min(p1[1], p2[1]) - pad
+    maxy = max(p1[1], p2[1]) + pad
+    local = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]
+    pos = [(cx + lx * scale, cy + ly * scale) for lx, ly in local]
+    indices = [(0, 1, 2), (2, 3, 0)]
+    batch = batch_for_shader(_capsule_shader, 'TRIS', {"pos": pos, "local": local}, indices=indices)
+    gpu.state.blend_set('ALPHA')
+    _capsule_shader.bind()
+    _capsule_shader.uniform_float("color", color)
+    _capsule_shader.uniform_float("p1", p1)
+    _capsule_shader.uniform_float("p2", p2)
+    _capsule_shader.uniform_float("radius", radius)
+    batch.draw(_capsule_shader)
+    gpu.state.blend_set('NONE')
+
+
+ICON_STROKE_RADIUS = 0.9
+ICON_COLOR = (1.0, 1.0, 1.0, 1.0)
+
+
 def _draw_icon(code, cx, cy, scale=1.0):
     if code == 'V':
-        _draw_circle(cx, cy, 2.2 * scale, (1.0, 1.0, 1.0, 1.0))
+        _draw_circle(cx, cy, 2.2 * scale, ICON_COLOR)
         return
-
-    gpu.state.blend_set('ALPHA')
-    gpu.state.line_width_set(max(1.6 * scale, 1.0))
-    _shader.bind()
-    _shader.uniform_float("color", (1.0, 1.0, 1.0, 1.0))
 
     curve = ICON_CURVES.get(code)
     if curve:
-        verts = [(cx + x * scale, cy + y * scale) for x, y in curve]
-        batch = batch_for_shader(_shader, 'LINE_STRIP', {"pos": verts})
-        batch.draw(_shader)
+        for i in range(len(curve) - 1):
+            _draw_capsule_local(curve[i], curve[i + 1], ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
 
     segments = ICON_SEGMENTS.get(code)
     if segments:
-        verts = []
-        for (x1, y1), (x2, y2) in segments:
-            verts.append((cx + x1 * scale, cy + y1 * scale))
-            verts.append((cx + x2 * scale, cy + y2 * scale))
-        batch = batch_for_shader(_shader, 'LINES', {"pos": verts})
-        batch.draw(_shader)
-
-    gpu.state.line_width_set(1.0)
-    gpu.state.blend_set('NONE')
+        for p1, p2 in segments:
+            _draw_capsule_local(p1, p2, ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
 
 
 class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
