@@ -18,6 +18,7 @@ BUTTONS = [
     ("Remap Dupes", "RD", "best.remap_duplicates", {}),
     ("Flip X", "FX", "object.flip_x", {}),
     ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
+    ("Align Cam", "ACV", "view3d.camera_to_view", {}),
     ("GP to Mesh", "G2M", "object.gp_to_mesh", {}),
     ("UV Act Quads", "UVQ", "object.uv_active_quads", {}),
     ("UV Quads Full", "UVF", "object.uv_active_quads_full", {}),
