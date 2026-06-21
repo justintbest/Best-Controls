@@ -4,14 +4,14 @@ import gpu
 import blf
 from gpu_extras.batch import batch_for_shader
 
-FONT_SIZE = 9
-TOOLTIP_FONT_SIZE = 12
+FONT_SIZE = 11
 BUTTON_H = 30
 RADIUS = 8
 GAP_Y = 6
-MARGIN_TOP = 60
-STRIP_WIDTH = 34
+TOP_OFFSET = 290
+STRIP_WIDTH = 180
 STRIP_MARGIN = 4
+TEXT_PAD = 10
 
 BUTTONS = [
     ("Move to Active Collection", "MAC", "object.move_to_active_collection", {}),
@@ -67,7 +67,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     def build_layout(self, region):
         x = region.width - STRIP_WIDTH - STRIP_MARGIN
         w = STRIP_WIDTH
-        y = region.height - MARGIN_TOP
+        y = region.height - TOP_OFFSET
         buttons = []
         for label, short, idname, kwargs in BUTTONS:
             y -= BUTTON_H
@@ -80,30 +80,13 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         buttons = self.build_layout(region)
         mouse_x, mouse_y = self.mouse_pos
 
-        hovered_item = None
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            if hovered:
-                hovered_item = (label, x, y, w, h)
             color = (0.32, 0.32, 0.32, 0.92) if hovered else (0.13, 0.13, 0.13, 0.85)
             _draw_pill(x, y, w, h, color)
             blf.size(0, FONT_SIZE)
-            text_w = blf.dimensions(0, short)[0]
-            blf.position(0, x + (w - text_w) / 2, y + (h - FONT_SIZE) / 2 + 1, 0)
+            blf.position(0, x + TEXT_PAD, y + (h - FONT_SIZE) / 2 + 1, 0)
             blf.color(0, 0.9, 0.9, 0.9, 1.0)
-            blf.draw(0, short)
-
-        if hovered_item:
-            label, x, y, w, h = hovered_item
-            blf.size(0, TOOLTIP_FONT_SIZE)
-            text_w = blf.dimensions(0, label)[0]
-            tip_pad = 8
-            tip_w = text_w + 2 * tip_pad
-            tip_x = x - tip_w - 6
-            tip_y = y
-            _draw_pill(tip_x, tip_y, tip_w, h, (0.08, 0.08, 0.08, 0.95))
-            blf.position(0, tip_x + tip_pad, tip_y + (h - TOOLTIP_FONT_SIZE) / 2 + 1, 0)
-            blf.color(0, 1.0, 1.0, 1.0, 1.0)
             blf.draw(0, label)
 
     def modal(self, context, event):
