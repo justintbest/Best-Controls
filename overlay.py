@@ -49,15 +49,26 @@ ICON_SEGMENTS = {
 
 def _gp_stroke_curve():
     pts = []
-    for i in range(13):
-        angle = math.radians(100 + 290 * i / 12)
-        pts.append((-2 + 2.4 * math.cos(angle), 1.5 + 2.4 * math.sin(angle)))
-    pts.append((5.5, -3.5))
+    for i in range(11):
+        angle = math.radians(-40 + 300 * i / 10)
+        pts.append((4.5 * math.cos(angle), 4.5 * math.sin(angle)))
     return pts
+
+
+def _gp_stroke_arrowhead():
+    tip = (4.5 * math.cos(math.radians(-40)), 4.5 * math.sin(math.radians(-40)))
+    return [
+        ((tip[0] - 2.6, tip[1] + 1.6), tip),
+        ((tip[0] - 0.3, tip[1] - 2.8), tip),
+    ]
 
 
 ICON_CURVES = {
     'G': _gp_stroke_curve(),
+}
+
+ICON_SEGMENTS_EXTRA = {
+    'G': _gp_stroke_arrowhead(),
 }
 
 CIRCLE_D = 22
@@ -184,6 +195,11 @@ def _draw_icon(code, cx, cy, scale=1.0):
         for p1, p2 in segments:
             _draw_capsule_local(p1, p2, ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
 
+    extra = ICON_SEGMENTS_EXTRA.get(code)
+    if extra:
+        for p1, p2 in extra:
+            _draw_capsule_local(p1, p2, ICON_STROKE_RADIUS, cx, cy, scale, ICON_COLOR)
+
 
 class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     bl_idname = "view3d.best_controls_overlay"
@@ -233,7 +249,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            color = (0.20, 0.20, 0.20, 1.0) if hovered else (0.07, 0.07, 0.07, 1.0)
+            color = (0.13, 0.13, 0.13, 1.0) if hovered else (0.02, 0.02, 0.02, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
             blf.position(0, x + text_pad, y + (h - font_size) / 2 + 1, 0)
