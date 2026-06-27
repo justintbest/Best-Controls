@@ -8,7 +8,7 @@ FONT_SIZE = 9
 BUTTON_H = 19
 RADIUS = 9
 GAP_Y = 4
-TOP_OFFSET = 60
+TOP_OFFSET = 300
 STRIP_MARGIN = 2
 TEXT_PAD = 8
 
@@ -177,7 +177,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * text_pad
         add_w = w * ADD_BUTTON_WIDTH_FACTOR
 
-        add_x = strip_margin + tools_width
+        add_x = strip_margin
         x = add_x + add_w + add_gap_x
         y = region.height - top_offset
 
