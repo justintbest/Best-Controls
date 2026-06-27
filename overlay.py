@@ -4,14 +4,14 @@ import gpu
 import blf
 from gpu_extras.batch import batch_for_shader
 
-FONT_SIZE = 8
-BUTTON_H = 16
-RADIUS = 8
-GAP_X = 3
-ROW_GAP = 3
-BOTTOM_OFFSET = 20
+FONT_SIZE = 9
+BUTTON_H = 19
+RADIUS = 9
+GAP_X = 4
+ROW_GAP = 4
+BOTTOM_OFFSET = 8
 STRIP_MARGIN = 4
-TEXT_PAD = 6
+TEXT_PAD = 8
 
 BUTTONS = [
     ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
@@ -179,18 +179,21 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * text_pad
         add_w = w * ADD_BUTTON_WIDTH_FACTOR
 
-        start_x = strip_margin + tools_width
+        right_edge = region.width - strip_margin - ui_width
         main_row_y = bottom_offset
         add_row_y = main_row_y + button_h + row_gap
 
+        main_total = len(BUTTONS) * w + (len(BUTTONS) - 1) * gap_x
+        add_total = len(ADD_BUTTONS) * add_w + (len(ADD_BUTTONS) - 1) * add_gap_x
+
         buttons = []
-        x = start_x
+        x = right_edge - main_total
         for label, short, idname, kwargs in BUTTONS:
             buttons.append(("BUTTON", label, short, x, main_row_y, w, button_h, idname, kwargs))
             x += w + gap_x
 
         add_buttons = []
-        x = start_x
+        x = right_edge - add_total
         for label, idname, kwargs in ADD_BUTTONS:
             add_buttons.append(("ADD", label, x, add_row_y, add_w, button_h, idname, kwargs))
             x += add_w + add_gap_x
@@ -199,8 +202,8 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
     def draw_callback(self, context):
         region = bpy.context.region
-        tools_width = self._region_width(bpy.context.area, 'TOOLS')
-        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region, tools_width=tools_width)
+        ui_width = self._region_width(bpy.context.area, 'UI')
+        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region, ui_width=ui_width)
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
@@ -239,8 +242,8 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
-            tools_width = self._region_width(context.area, 'TOOLS')
-            buttons, add_buttons, _, _, _ = self.build_layout(context.region, tools_width=tools_width)
+            ui_width = self._region_width(context.area, 'UI')
+            buttons, add_buttons, _, _, _ = self.build_layout(context.region, ui_width=ui_width)
 
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if x <= mx <= x + w and y <= my <= y + h:
