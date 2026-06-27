@@ -7,8 +7,10 @@ from gpu_extras.batch import batch_for_shader
 FONT_SIZE = 9
 BUTTON_H = 19
 RADIUS = 9
-GAP_Y = 4
-STRIP_MARGIN = 2
+GAP_X = 4
+ROW_GAP = 4
+BOTTOM_OFFSET = 8
+STRIP_MARGIN = 4
 TEXT_PAD = 8
 
 BUTTONS = [
@@ -162,18 +164,13 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         region = next((r for r in area.regions if r.type == region_type), None)
         return region.width if region else 0
 
-    @staticmethod
-    def _region_height(area, region_type):
-        if area is None:
-            return 0
-        region = next((r for r in area.regions if r.type == region_type), None)
-        return region.height if region else 0
-
-    def build_layout(self, region, ui_width=0, tools_width=0, tools_height=0):
+    def build_layout(self, region, ui_width=0, tools_width=0):
         s = _ui_scale()
         font_size = round(FONT_SIZE * s)
         button_h = BUTTON_H * s
-        gap_y = GAP_Y * s
+        gap_x = GAP_X * s
+        row_gap = ROW_GAP * s
+        bottom_offset = BOTTOM_OFFSET * s
         strip_margin = STRIP_MARGIN * s
         text_pad = TEXT_PAD * s
         add_gap_x = ADD_BUTTON_GAP_X * s
@@ -182,32 +179,31 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         w = blf.dimensions(0, REFERENCE_LABEL)[0] + 2 * text_pad
         add_w = w * ADD_BUTTON_WIDTH_FACTOR
 
-        add_x = strip_margin
-        x = add_x + add_w + add_gap_x
-        y = region.height - tools_height - strip_margin
+        right_edge = region.width - strip_margin - ui_width
+        main_row_y = bottom_offset
+        add_row_y = main_row_y + button_h + row_gap
 
-        add_buttons = []
-        ay = y
-        for label, idname, kwargs in ADD_BUTTONS:
-            ay -= button_h
-            add_buttons.append(("ADD", label, add_x, ay, add_w, button_h, idname, kwargs))
-            ay -= gap_y
+        main_total = len(BUTTONS) * w + (len(BUTTONS) - 1) * gap_x
+        add_total = len(ADD_BUTTONS) * add_w + (len(ADD_BUTTONS) - 1) * add_gap_x
 
         buttons = []
+        x = right_edge - main_total
         for label, short, idname, kwargs in BUTTONS:
-            y -= button_h
-            buttons.append(("BUTTON", label, short, x, y, w, button_h, idname, kwargs))
-            y -= gap_y
+            buttons.append(("BUTTON", label, short, x, main_row_y, w, button_h, idname, kwargs))
+            x += w + gap_x
+
+        add_buttons = []
+        x = right_edge - add_total
+        for label, idname, kwargs in ADD_BUTTONS:
+            add_buttons.append(("ADD", label, x, add_row_y, add_w, button_h, idname, kwargs))
+            x += add_w + add_gap_x
 
         return buttons, add_buttons, font_size, text_pad, s
 
     def draw_callback(self, context):
         region = bpy.context.region
-        tools_width = self._region_width(bpy.context.area, 'TOOLS')
-        tools_height = self._region_height(bpy.context.area, 'TOOLS')
-        buttons, add_buttons, font_size, text_pad, s = self.build_layout(
-            region, tools_width=tools_width, tools_height=tools_height
-        )
+        ui_width = self._region_width(bpy.context.area, 'UI')
+        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region, ui_width=ui_width)
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
@@ -242,11 +238,8 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
-            tools_width = self._region_width(context.area, 'TOOLS')
-            tools_height = self._region_height(context.area, 'TOOLS')
-            buttons, add_buttons, _, _, _ = self.build_layout(
-                context.region, tools_width=tools_width, tools_height=tools_height
-            )
+            ui_width = self._region_width(context.area, 'UI')
+            buttons, add_buttons, _, _, _ = self.build_layout(context.region, ui_width=ui_width)
 
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if x <= mx <= x + w and y <= my <= y + h:
