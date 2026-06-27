@@ -208,10 +208,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            if label in ORANGE_BUTTON_LABELS:
-                v = 0.24 if hovered else 0.14
-            else:
-                v = 0.10 if hovered else 0.02
+            v = 0.26 if hovered else 0.18
             color = (v, v, v, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
@@ -222,10 +219,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         for kind, label, x, y, w, h, idname, kwargs in add_buttons:
             hovered = x <= mouse_x <= x + w and y <= mouse_y <= y + h
-            if label in YELLOW_ADD_BUTTON_LABELS:
-                v = 0.24 if hovered else 0.14
-            else:
-                v = 0.10 if hovered else 0.02
+            v = 0.26 if hovered else 0.18
             color = (v, v, v, 1.0)
             _draw_pill(x, y, w, h, color)
             blf.size(0, font_size)
