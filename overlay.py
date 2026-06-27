@@ -4,14 +4,14 @@ import gpu
 import blf
 from gpu_extras.batch import batch_for_shader
 
-FONT_SIZE = 10
-BUTTON_H = 22
-RADIUS = 11
-GAP_X = 5
-ROW_GAP = 5
-BOTTOM_OFFSET = 26
+FONT_SIZE = 8
+BUTTON_H = 16
+RADIUS = 8
+GAP_X = 3
+ROW_GAP = 3
+BOTTOM_OFFSET = 20
 STRIP_MARGIN = 4
-TEXT_PAD = 10
+TEXT_PAD = 6
 
 BUTTONS = [
     ("Flip Camera X", "FCX", "object.flip_camera_x", {}),
@@ -45,7 +45,7 @@ ADD_BUTTONS = [
 YELLOW_ADD_BUTTON_LABELS = {"Point", "Area", "Sun"}
 
 ADD_BUTTON_WIDTH_FACTOR = 0.7
-ADD_BUTTON_GAP_X = 6
+ADD_BUTTON_GAP_X = 3
 
 _shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 
