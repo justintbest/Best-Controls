@@ -8,7 +8,6 @@ FONT_SIZE = 9
 BUTTON_H = 19
 RADIUS = 9
 GAP_Y = 4
-TOP_OFFSET = 400
 STRIP_MARGIN = 2
 TEXT_PAD = 8
 
@@ -163,12 +162,18 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         region = next((r for r in area.regions if r.type == region_type), None)
         return region.width if region else 0
 
-    def build_layout(self, region, ui_width=0, tools_width=0):
+    @staticmethod
+    def _region_height(area, region_type):
+        if area is None:
+            return 0
+        region = next((r for r in area.regions if r.type == region_type), None)
+        return region.height if region else 0
+
+    def build_layout(self, region, ui_width=0, tools_width=0, tools_height=0):
         s = _ui_scale()
         font_size = round(FONT_SIZE * s)
         button_h = BUTTON_H * s
         gap_y = GAP_Y * s
-        top_offset = TOP_OFFSET * s
         strip_margin = STRIP_MARGIN * s
         text_pad = TEXT_PAD * s
         add_gap_x = ADD_BUTTON_GAP_X * s
@@ -179,7 +184,7 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
 
         add_x = strip_margin
         x = add_x + add_w + add_gap_x
-        y = region.height - top_offset
+        y = region.height - tools_height - strip_margin
 
         add_buttons = []
         ay = y
@@ -199,7 +204,10 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
     def draw_callback(self, context):
         region = bpy.context.region
         tools_width = self._region_width(bpy.context.area, 'TOOLS')
-        buttons, add_buttons, font_size, text_pad, s = self.build_layout(region, tools_width=tools_width)
+        tools_height = self._region_height(bpy.context.area, 'TOOLS')
+        buttons, add_buttons, font_size, text_pad, s = self.build_layout(
+            region, tools_width=tools_width, tools_height=tools_height
+        )
         mouse_x, mouse_y = self.mouse_pos
 
         for kind, label, short, x, y, w, h, idname, kwargs in buttons:
@@ -235,7 +243,10 @@ class VIEW3D_OT_best_controls_overlay(bpy.types.Operator):
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             mx, my = event.mouse_region_x, event.mouse_region_y
             tools_width = self._region_width(context.area, 'TOOLS')
-            buttons, add_buttons, _, _, _ = self.build_layout(context.region, tools_width=tools_width)
+            tools_height = self._region_height(context.area, 'TOOLS')
+            buttons, add_buttons, _, _, _ = self.build_layout(
+                context.region, tools_width=tools_width, tools_height=tools_height
+            )
 
             for kind, label, short, x, y, w, h, idname, kwargs in buttons:
                 if x <= mx <= x + w and y <= my <= y + h:
