@@ -41,7 +41,6 @@ from .panels import (
     VIEW3D_PT_best_objects,
     VIEW3D_PT_best_primitives,
 )
-from . import overlay
 
 classes = (
     OBJECT_OT_move_to_active_collection,
@@ -76,9 +75,7 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    overlay.register()
 
 def unregister():
-    overlay.unregister()
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
