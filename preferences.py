@@ -4,14 +4,14 @@ import bpy
 class BestControlsPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
-    asset_folder: bpy.props.StringProperty(
-        name="Geometry Nodes Asset Folder",
-        description="Folder containing a .blend file with a Geometry Nodes group marked as an asset",
-        subtype='DIR_PATH',
+    asset_file: bpy.props.StringProperty(
+        name="Geometry Nodes Asset File",
+        description="A .blend file containing a Geometry Nodes group marked as an asset",
+        subtype='FILE_PATH',
     )
 
     def draw(self, context):
-        self.layout.prop(self, "asset_folder")
+        self.layout.prop(self, "asset_file")
 
 
 def get_prefs(context):

@@ -9,7 +9,7 @@ class OBJECT_OT_add_geo_nodes_asset(bpy.types.Operator):
     bl_idname = "object.add_geo_nodes_asset"
     bl_label = "Add Geometry Nodes Asset"
     bl_description = (
-        "Append the Geometry Nodes group marked as an asset in the folder set in "
+        "Append the Geometry Nodes group marked as an asset in the .blend file set in "
         "add-on preferences, and add it as a modifier on the selected objects"
     )
     bl_options = {'REGISTER', 'UNDO'}
@@ -20,29 +20,20 @@ class OBJECT_OT_add_geo_nodes_asset(bpy.types.Operator):
 
     def execute(self, context):
         prefs = get_prefs(context)
-        folder = bpy.path.abspath(prefs.asset_folder)
+        blend_path = bpy.path.abspath(prefs.asset_file)
 
-        if not folder or not os.path.isdir(folder):
-            self.report({'ERROR'}, "Set a valid asset folder in Best Controls preferences")
+        if not blend_path or not os.path.isfile(blend_path):
+            self.report({'ERROR'}, "Set a valid .blend file in Best Controls preferences")
             return {'CANCELLED'}
 
-        blend_paths = [
-            os.path.join(folder, name)
-            for name in sorted(os.listdir(folder))
-            if name.lower().endswith(".blend")
-        ]
+        with bpy.data.libraries.load(blend_path, link=False, assets_only=True) as (data_from, data_to):
+            if data_from.node_groups:
+                data_to.node_groups = data_from.node_groups[:1]
 
-        node_group = None
-        for blend_path in blend_paths:
-            with bpy.data.libraries.load(blend_path, link=False, assets_only=True) as (data_from, data_to):
-                if data_from.node_groups:
-                    data_to.node_groups = data_from.node_groups[:1]
-            if data_to.node_groups:
-                node_group = data_to.node_groups[0]
-                break
+        node_group = data_to.node_groups[0] if data_to.node_groups else None
 
         if node_group is None:
-            self.report({'ERROR'}, f"No Geometry Nodes asset found in {folder}")
+            self.report({'ERROR'}, f"No Geometry Nodes asset found in {blend_path}")
             return {'CANCELLED'}
 
         targets = context.selected_objects or [context.active_object]
