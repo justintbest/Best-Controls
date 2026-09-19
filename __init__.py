@@ -48,6 +48,7 @@ from .preferences import (
     BEST_UL_asset_entries,
     BEST_OT_add_asset_entry,
     BEST_OT_remove_asset_entry,
+    BEST_OT_move_asset_entry,
     BestControlsPreferences,
 )
 
@@ -85,6 +86,7 @@ classes = (
     BEST_UL_asset_entries,
     BEST_OT_add_asset_entry,
     BEST_OT_remove_asset_entry,
+    BEST_OT_move_asset_entry,
     BestControlsPreferences,
 )
 

@@ -46,6 +46,34 @@ class BEST_OT_remove_asset_entry(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class BEST_OT_move_asset_entry(bpy.types.Operator):
+    bl_idname = "best.move_asset_entry"
+    bl_label = "Move Asset Entry"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    direction: bpy.props.EnumProperty(
+        items=(
+            ('UP', "Up", ""),
+            ('DOWN', "Down", ""),
+        ),
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return bool(get_prefs(context).asset_entries)
+
+    def execute(self, context):
+        prefs = get_prefs(context)
+        index = prefs.active_asset_index
+        new_index = index - 1 if self.direction == 'UP' else index + 1
+
+        if 0 <= new_index < len(prefs.asset_entries):
+            prefs.asset_entries.move(index, new_index)
+            prefs.active_asset_index = new_index
+
+        return {'FINISHED'}
+
+
 class BestControlsPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -66,6 +94,9 @@ class BestControlsPreferences(bpy.types.AddonPreferences):
         col = row.column(align=True)
         col.operator("best.add_asset_entry", text="", icon='ADD')
         col.operator("best.remove_asset_entry", text="", icon='REMOVE')
+        col.separator()
+        col.operator("best.move_asset_entry", text="", icon='TRIA_UP').direction = 'UP'
+        col.operator("best.move_asset_entry", text="", icon='TRIA_DOWN').direction = 'DOWN'
 
 
 def get_prefs(context):
