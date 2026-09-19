@@ -25,3 +25,4 @@ from .primitives import (
     OBJECT_OT_add_sun_light,
     OBJECT_OT_add_gp_stroke,
 )
+from .assets import OBJECT_OT_add_geo_nodes_asset
