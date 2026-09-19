@@ -7,7 +7,7 @@ class VIEW3D_PT_best_primitives(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Best Controls"
-    bl_order = 2
+    bl_order = 4
 
     def draw(self, context):
         layout = self.layout
