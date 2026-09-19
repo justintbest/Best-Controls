@@ -34,16 +34,13 @@ from . operators import (
     OBJECT_OT_add_sun_light,
     OBJECT_OT_add_gp_stroke,
     OBJECT_OT_add_decimate_modifier,
-    OBJECT_OT_add_geo_nodes_asset,
 )
 from .panels import (
     VIEW3D_PT_move_to_active_collection,
     VIEW3D_PT_scene_custom_props_filtered,
     VIEW3D_PT_best_objects,
     VIEW3D_PT_best_primitives,
-    VIEW3D_PT_best_assets,
 )
-from .preferences import BestControlsPreferences
 
 classes = (
     OBJECT_OT_move_to_active_collection,
@@ -69,13 +66,10 @@ classes = (
     OBJECT_OT_add_sun_light,
     OBJECT_OT_add_gp_stroke,
     OBJECT_OT_add_decimate_modifier,
-    OBJECT_OT_add_geo_nodes_asset,
     VIEW3D_PT_move_to_active_collection,
     VIEW3D_PT_scene_custom_props_filtered,
     VIEW3D_PT_best_objects,
     VIEW3D_PT_best_primitives,
-    VIEW3D_PT_best_assets,
-    BestControlsPreferences,
 )
 
 def register():

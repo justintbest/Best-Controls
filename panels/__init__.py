@@ -2,4 +2,3 @@ from .collections import VIEW3D_PT_move_to_active_collection
 from .controls import VIEW3D_PT_scene_custom_props_filtered
 from .objects import VIEW3D_PT_best_objects
 from .primitives import VIEW3D_PT_best_primitives
-from .assets import VIEW3D_PT_best_assets
