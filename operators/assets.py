@@ -27,14 +27,19 @@ class OBJECT_OT_add_geo_nodes_asset(bpy.types.Operator):
             return {'CANCELLED'}
 
         with bpy.data.libraries.load(blend_path, link=False, assets_only=True) as (data_from, data_to):
-            if data_from.node_groups:
-                data_to.node_groups = data_from.node_groups[:1]
+            available_names = list(data_from.node_groups)
 
-        node_group = data_to.node_groups[0] if data_to.node_groups else None
-
-        if node_group is None:
+        if not available_names:
             self.report({'ERROR'}, f"No Geometry Nodes asset found in {blend_path}")
             return {'CANCELLED'}
+
+        asset_name = available_names[0]
+        node_group = bpy.data.node_groups.get(asset_name)
+
+        if node_group is None:
+            with bpy.data.libraries.load(blend_path, link=False, assets_only=True) as (data_from, data_to):
+                data_to.node_groups = [asset_name]
+            node_group = data_to.node_groups[0]
 
         targets = context.selected_objects or [context.active_object]
         for obj in targets:
