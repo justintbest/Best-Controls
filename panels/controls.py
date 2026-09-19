@@ -6,6 +6,7 @@ class VIEW3D_PT_scene_custom_props_filtered(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Best Controls"
+    bl_order = 2
 
     def draw(self, context):
         layout = self.layout

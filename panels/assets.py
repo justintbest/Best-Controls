@@ -9,7 +9,7 @@ class VIEW3D_PT_best_assets(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Best Controls"
-    bl_order = -10
+    bl_order = 0
 
     def draw(self, context):
         layout = self.layout
