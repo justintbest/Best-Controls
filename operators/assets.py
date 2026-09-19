@@ -2,28 +2,30 @@ import os
 
 import bpy
 
-from ..preferences import get_prefs
-
 
 class OBJECT_OT_add_geo_nodes_asset(bpy.types.Operator):
     bl_idname = "object.add_geo_nodes_asset"
     bl_label = "Add Geometry Nodes Asset"
     bl_description = (
-        "Append the Geometry Nodes group marked as an asset in the .blend file set in "
-        "add-on preferences, and add it as a modifier on the selected objects"
+        "Append the Geometry Nodes group marked as an asset in the given .blend file, "
+        "and add it as a modifier on the selected objects"
     )
     bl_options = {'REGISTER', 'UNDO'}
+
+    blend_path: bpy.props.StringProperty(
+        name="Blend File",
+        subtype='FILE_PATH',
+    )
 
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
 
     def execute(self, context):
-        prefs = get_prefs(context)
-        blend_path = bpy.path.abspath(prefs.asset_file)
+        blend_path = bpy.path.abspath(self.blend_path)
 
         if not blend_path or not os.path.isfile(blend_path):
-            self.report({'ERROR'}, "Set a valid .blend file in Best Controls preferences")
+            self.report({'ERROR'}, "No valid .blend file set for this asset entry")
             return {'CANCELLED'}
 
         with bpy.data.libraries.load(blend_path, link=False, assets_only=True) as (data_from, data_to):

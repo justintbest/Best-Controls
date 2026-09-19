@@ -1,5 +1,7 @@
 import bpy
 
+from ..preferences import get_prefs
+
 
 class VIEW3D_PT_best_assets(bpy.types.Panel):
     bl_label = "Assets"
@@ -9,4 +11,14 @@ class VIEW3D_PT_best_assets(bpy.types.Panel):
     bl_category = "Best Controls"
 
     def draw(self, context):
-        self.layout.operator("object.add_geo_nodes_asset")
+        layout = self.layout
+        prefs = get_prefs(context)
+
+        if not prefs.asset_entries:
+            layout.label(text="No assets configured")
+            layout.label(text="Add one in Add-on Preferences")
+            return
+
+        for entry in prefs.asset_entries:
+            op = layout.operator("object.add_geo_nodes_asset", text=entry.name or "Asset")
+            op.blend_path = entry.file_path

@@ -43,7 +43,13 @@ from .panels import (
     VIEW3D_PT_best_primitives,
     VIEW3D_PT_best_assets,
 )
-from .preferences import BestControlsPreferences
+from .preferences import (
+    BestControlsAssetEntry,
+    BEST_UL_asset_entries,
+    BEST_OT_add_asset_entry,
+    BEST_OT_remove_asset_entry,
+    BestControlsPreferences,
+)
 
 classes = (
     OBJECT_OT_move_to_active_collection,
@@ -75,6 +81,10 @@ classes = (
     VIEW3D_PT_best_objects,
     VIEW3D_PT_best_primitives,
     VIEW3D_PT_best_assets,
+    BestControlsAssetEntry,
+    BEST_UL_asset_entries,
+    BEST_OT_add_asset_entry,
+    BEST_OT_remove_asset_entry,
     BestControlsPreferences,
 )
 
