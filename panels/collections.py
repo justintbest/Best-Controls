@@ -6,7 +6,7 @@ class VIEW3D_PT_move_to_active_collection(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Best Controls"
-    bl_order = 1
+    bl_order = 3
 
     def draw(self, context):
         active_coll = context.view_layer.active_layer_collection.collection
